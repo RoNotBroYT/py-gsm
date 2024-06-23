@@ -1,0 +1,110 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+BASKET_WIDTH = 100
+BASKET_HEIGHT = 20
+OBJECT_WIDTH = 20
+OBJECT_HEIGHT = 20
+OBJECT_SPEED = 5
+BASKET_SPEED = 10
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+FPS = 60
+
+# Set up display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption('Catch the Falling Objects')
+
+# Basket class
+class Basket(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([BASKET_WIDTH, BASKET_HEIGHT])
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.x = SCREEN_WIDTH // 2 - BASKET_WIDTH // 2
+        self.rect.y = SCREEN_HEIGHT - BASKET_HEIGHT - 10
+        self.speed = 0
+
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.x < 0:
+            self.rect.x = 0
+        if self.rect.x > SCREEN_WIDTH - BASKET_WIDTH:
+            self.rect.x = SCREEN_WIDTH - BASKET_WIDTH
+
+# Falling object class
+class FallingObject(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([OBJECT_WIDTH, OBJECT_HEIGHT])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randint(0, SCREEN_WIDTH - OBJECT_WIDTH)
+        self.rect.y = 0
+
+    def update(self):
+        self.rect.y += OBJECT_SPEED
+        if self.rect.y > SCREEN_HEIGHT:
+            self.kill()
+
+# Initialize basket
+basket = Basket()
+all_sprites = pygame.sprite.Group()
+all_sprites.add(basket)
+
+# Initialize falling objects
+falling_objects = pygame.sprite.Group()
+
+# Game loop
+running = True
+clock = pygame.time.Clock()
+score = 0
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                basket.speed = -BASKET_SPEED
+            elif event.key == pygame.K_RIGHT:
+                basket.speed = BASKET_SPEED
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                basket.speed = 0
+
+    # Create a new falling object
+    if random.randint(1, 20) == 1:
+        falling_object = FallingObject()
+        all_sprites.add(falling_object)
+        falling_objects.add(falling_object)
+
+    # Update sprites
+    all_sprites.update()
+
+    # Check for collisions
+    hits = pygame.sprite.spritecollide(basket, falling_objects, True)
+    if hits:
+        score += 1
+
+    # Draw everything
+    screen.fill(BLACK)
+    all_sprites.draw(screen)
+
+    # Draw score
+    font = pygame.font.Font(None, 36)
+    text = font.render(f'Score: {score}', True, WHITE)
+    screen.blit(text, (10, 10))
+
+    # Update display
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()
